@@ -46,7 +46,6 @@ char *appendRandom(char *str, char *alphabet, int amount) {
 }
 
 - (IBAction)generatePassword:(id)sender {
-
 	// Get slider values
 	int letters  = [self.lettersSlider intValue];
 	int capitals = [self.capitalsSlider intValue];
@@ -61,7 +60,7 @@ char *appendRandom(char *str, char *alphabet, int amount) {
 	[self.symbolsField setStringValue:[NSString stringWithFormat:@"%d", symbols]];
 
 	// Build the password using C strings - for speed
-	char *cPassword = calloc(length, sizeof(char) + 1);
+	char *cPassword = calloc(length + 1, sizeof(char));
 	char *ptr       = cPassword;
 
 	cPassword[length - 1] = '\0';
@@ -91,7 +90,6 @@ char *appendRandom(char *str, char *alphabet, int amount) {
 
 	// Clean up
 	free(cPassword);
-
 }
 
 - (void)dealloc {
