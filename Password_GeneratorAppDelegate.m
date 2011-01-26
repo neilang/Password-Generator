@@ -10,78 +10,101 @@
 
 @implementation Password_GeneratorAppDelegate
 
-@synthesize window;
-@synthesize useLetters    = _useLetters;
-@synthesize useCapitals   = _useCapitals;
-@synthesize useDigits     = _useDigits;
-@synthesize useSymbols    = _useSymbols;
-@synthesize sizeSlider    = _sizeSlider;
-@synthesize passwordField = _passwordField;
 
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-	srand(time(NULL));
-}
+@synthesize window;
+@synthesize lettersSlider  = _lettersSlider;
+@synthesize capitalsSlider = _capitalsSlider;
+@synthesize digitsSlider   = _digitsSlider;
+@synthesize symbolsSlider  = _symbolsSlider;
+@synthesize passwordField  = _passwordField;
+
+@synthesize lettersField  = _lettersField;
+@synthesize capitalsField = _capitalsField;
+@synthesize digitsField   = _digitsField;
+@synthesize symbolsField  = _symbolsField;
+
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {}
 
 - (void)awakeFromNib {
-	[self.sizeSlider setIntegerValue:8];
+	[self generatePassword:nil];
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
 	return YES;
 }
 
-- (NSArray *)desiredCharacters {
-	NSMutableArray *alphabet = [[NSMutableArray alloc] init];
-
-	NSCharacterSet *letters  = [NSCharacterSet lowercaseLetterCharacterSet];
-	NSCharacterSet *capitals = [NSCharacterSet uppercaseLetterCharacterSet];
-	NSCharacterSet *digits   = [NSCharacterSet decimalDigitCharacterSet];
-	NSCharacterSet *symbols  = [NSCharacterSet characterSetWithCharactersInString:@"!~#$%&*()[]{}?<>;+="];
-
-	for (int i = 0; i < 128; i++) {
-		if (
-		  ([self.useLetters state] && [letters characterIsMember:i]) ||
-		  ([self.useCapitals state] && [capitals characterIsMember:i]) ||
-		  ([self.useDigits state] && [digits characterIsMember:i]) ||
-		  ([self.useSymbols state] && [symbols characterIsMember:i])
-		  ) {
-			[alphabet addObject:[NSString stringWithFormat:@"%c", i]];
-		}
+// Helper function for appending random chars from a supplied alphabet
+// And then advances the pointer
+char *appendRandom(char *str, char *alphabet, int amount) {
+	for (int i = 0; i < amount; i++) {
+		int r = arc4random() % strlen(alphabet);
+		*str = alphabet[r];
+		str++;
 	}
 
-	// Incase nothing is checked
-	if ([alphabet count] < 1) {
-		[alphabet addObject:@""];
-	}
-
-	return [alphabet autorelease];
+	return str;
 }
 
 - (IBAction)generatePassword:(id)sender {
-	NSArray *alphabet = [self desiredCharacters];
 
-	int size = [self.sizeSlider intValue];
+	// Get slider values
+	int letters  = [self.lettersSlider intValue];
+	int capitals = [self.capitalsSlider intValue];
+	int digits   = [self.digitsSlider intValue];
+	int symbols  = [self.symbolsSlider intValue];
+	int length   = letters + capitals + digits + symbols;
 
-	NSMutableString *password = [[NSMutableString alloc] init];
+	// Update labels
+	[self.lettersField setStringValue:[NSString stringWithFormat:@"%d", letters]];
+	[self.capitalsField setStringValue:[NSString stringWithFormat:@"%d", capitals]];
+	[self.digitsField setStringValue:[NSString stringWithFormat:@"%d", digits]];
+	[self.symbolsField setStringValue:[NSString stringWithFormat:@"%d", symbols]];
 
-	for (int i = 0; i < size; i++) {
-		int j = rand() % [alphabet count];
-		[password appendString:[alphabet objectAtIndex:j]];
+	// Build the password using C strings - for speed
+	char *cPassword = calloc(length, sizeof(char) + 1);
+	char *ptr       = cPassword;
+
+	cPassword[length - 1] = '\0';
+
+	char *lettersAlphabet = "abcdefghijklmnopqrstuvwxyz";
+	ptr = appendRandom(ptr, lettersAlphabet, letters);
+
+	char *capitalsAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	ptr = appendRandom(ptr, capitalsAlphabet, capitals);
+
+	char *digitsAlphabet = "0123456789";
+	ptr = appendRandom(ptr, digitsAlphabet, digits);
+
+	char *symbolsAlphabet = "!@#$%*[];?()";
+	ptr = appendRandom(ptr, symbolsAlphabet, symbols);
+
+	// Shuffle the string!
+	for (int i = 0; i < length; i++) {
+		int  r    = arc4random() % length;
+		char temp = cPassword[i];
+		cPassword[i] = cPassword[r];
+		cPassword[r] = temp;
 	}
 
-	[self.passwordField setStringValue:[password autorelease]];
+	// Show the password
+	[self.passwordField setStringValue:[NSString stringWithCString:cPassword encoding:NSUTF8StringEncoding]];
 
-	// Remove cursor from text field
-	[[self window] makeFirstResponder:nil];
+	// Clean up
+	free(cPassword);
+
 }
 
 - (void)dealloc {
-	self.useLetters    = nil;
-	self.useCapitals   = nil;
-	self.useDigits     = nil;
-	self.useSymbols    = nil;
-	self.sizeSlider    = nil;
-	self.passwordField = nil;
+	self.lettersSlider  = nil;
+	self.capitalsSlider = nil;
+	self.digitsSlider   = nil;
+	self.symbolsSlider  = nil;
+	self.passwordField  = nil;
+	self.lettersField   = nil;
+	self.capitalsField  = nil;
+	self.digitsField    = nil;
+	self.symbolsField   = nil;
+
 	[super dealloc];
 }
 
