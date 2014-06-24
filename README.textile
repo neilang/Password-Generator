@@ -1,10 +1,5 @@
-h1. Password Generator
+h1. Password Generator (Objective-C)
 
 Basic OS X (10.6) password generator for creating random passwords.
 
-h2. TODO
-
- * Icon + interface
- * Record user selection
- * Pasteboard integration
- * Add preferences
+An updated "Swift version":https://github.com/neilang/Swift-Password-Generator is also available.
